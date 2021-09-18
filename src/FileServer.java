@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.StandardCopyOption;
 
 public class FileServer {
 
@@ -18,24 +19,16 @@ public class FileServer {
         // from the client. A fileWriter is also created.
         try (ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
              Socket clientSocket = serverSocket.accept();
-             BufferedReader in = new BufferedReader(
-                     new InputStreamReader(clientSocket.getInputStream()));
-             BufferedWriter fileWriter = new BufferedWriter(
-                     new FileWriter(DEFAULT_NEW_FILE_DIRECTORY))
+             InputStream inputStream = clientSocket.getInputStream()
         ) {
-            // If the past connections and object creation are successful, then we
-            // are able to proceed in writing the client input into a buffer.
-            System.out.println("Connection Successful!\nUpload Processing...");
+            // After a successful connection the client will upload a file
+            // that is then written to a designated file location
+            System.out.println("Connection successful.\nWriting file data...");
+            File outputFile = new File(DEFAULT_NEW_FILE_DIRECTORY);
 
-            // Until the client submits null, the server will wait for further data to be streamed in.
-            // Each line of input will be written into the buffer.
-            StringBuffer sb = new StringBuffer();
-            for (String line = in.readLine(); line != null; line = in.readLine())
-                sb.append(line).append("\n");
-
-            // The data within the buffer is written to file.
-            fileWriter.append(sb).flush();
-            System.out.println("Upload complete.");
+            // To write the inputStream, the nio (New IO) standard library is used.
+            java.nio.file.Files.copy(inputStream, outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("File upload complete.");
         } catch (IOException e) {
             // print detailed error stack trace.
             e.printStackTrace();
